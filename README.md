@@ -14,7 +14,6 @@ Chatbot web embutível para professores e coordenadores. O Upi responde com base
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Executar em desenvolvimento](#executar-em-desenvolvimento)
 - [Testar e gerar build](#testar-e-gerar-build)
-- [Deploy no Netlify](#deploy-no-netlify)
 - [Executar em produção](#executar-em-produção)
 - [Independência da Manus](#independência-da-manus)
 - [Autenticação](#autenticação)
@@ -198,45 +197,6 @@ Os testes atuais cobrem:
 - login temporário de administrador.
 
 O build gera os arquivos do frontend e o servidor empacotado em `dist/`. O aviso de chunks grandes do Vite não impede o build; avalie code splitting caso o desempenho do frontend se torne um problema.
-
-## Deploy no Netlify
-
-O projeto usa `netlify.toml` e uma Netlify Function em `netlify/functions/api.ts`. No painel do Netlify, importe o repositório `JeanVigia/Upi` e deixe a configuração detectada pelo arquivo:
-
-- **Build command:** `pnpm build`;
-- **Publish directory:** `dist/public`;
-- **Functions directory:** `netlify/functions`;
-- **Node:** 22;
-- **pnpm:** 10.4.1.
-
-Configure estas variáveis em **Site configuration → Environment variables**. Elas precisam estar disponíveis para **Builds and Functions**:
-
-```dotenv
-DATABASE_URL=mysql://usuario:senha@host:3306/unipinhal
-JWT_SECRET=uma-chave-longa-e-aleatoria
-LOCAL_ADMIN_USERNAME=Admin
-LOCAL_ADMIN_PASSWORD=uma-senha-forte
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=chave-do-provedor
-LLM_TEXT_MODEL=gpt-4o-mini
-LLM_VISION_MODEL=gpt-4o
-PUBLIC_APP_URL=https://seu-site.netlify.app
-NODE_ENV=production
-```
-
-Depois do deploy, teste diretamente:
-
-```text
-https://seu-site.netlify.app/
-https://seu-site.netlify.app/widget
-https://seu-site.netlify.app/widget.js
-```
-
-O frontend chama `/api/trpc`; os redirects do `netlify.toml` encaminham essa rota para `/.netlify/functions/api`. Se a página abrir mas o chat falhar, confira primeiro a aba **Functions** e os logs da função `api`.
-
-### Limitação importante do Netlify
-
-Netlify Functions são efêmeras. O `STORAGE_DIR` local não deve ser usado para arquivos que precisam persistir entre execuções. O screenshot do chat é enviado diretamente à IA e não precisa ser salvo, mas futuros uploads de manuais ou assets devem usar S3, Cloudflare R2 ou outro storage externo. O MySQL também deve estar hospedado externamente e aceitar conexões do Netlify.
 
 ## Executar em produção
 
