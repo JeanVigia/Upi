@@ -5,11 +5,11 @@ import { responseNeedsContinuation, selectChatModel } from "./routers";
 
 describe("selectChatModel", () => {
   it("uses the stronger multimodal model when a print is attached", () => {
-    expect(selectChatModel("data:image/png;base64,abc")).toBe("gemini-3.1-pro-preview");
+    expect(selectChatModel("data:image/png;base64,abc")).toBe(process.env.LLM_VISION_MODEL ?? "gpt-4o");
   });
 
   it("uses the fast model for text-only questions", () => {
-    expect(selectChatModel()).toBe("gemini-3-flash-preview");
+    expect(selectChatModel()).toBe(process.env.LLM_TEXT_MODEL ?? "gpt-4o-mini");
   });
 
   it("detects length-truncated model responses", () => {

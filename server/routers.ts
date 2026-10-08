@@ -1,9 +1,8 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
 import { MessageContent, invokeLLM } from "./_core/llm";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
-import { createTestAdminSession, TEST_ADMIN_COOKIE } from "./_core/context";
+import { createLocalAdminSession, LOCAL_ADMIN_COOKIE } from "./_core/context";
 import { createGuide, getActiveGuides, getAllGuides, getDb, updateGuide } from "./db";
 import { guides } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
@@ -52,7 +51,7 @@ function normalizeAnswer(content: string | Array<{ type: string; text?: string }
 }
 
 export function selectChatModel(imageDataUrl?: string) {
-  return imageDataUrl ? "gemini-3.1-pro-preview" : "gemini-3-flash-preview";
+  return imageDataUrl ? ENV.llmVisionModel : ENV.llmTextModel;
 }
 
 export function responseNeedsContinuation(finishReason: string | null | undefined) {
@@ -60,24 +59,23 @@ export function responseNeedsContinuation(finishReason: string | null | undefine
 }
 
 export const appRouter = router({
-  system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
-    testAdminLogin: publicProcedure
+    localLogin: publicProcedure
       .input(z.object({ username: z.string(), password: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        if (!ENV.testAdminPassword || input.username !== "Admin" || input.password !== ENV.testAdminPassword) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou senha de teste inválidos." });
+        if (!ENV.localAdminPassword || input.username !== ENV.localAdminUsername || input.password !== ENV.localAdminPassword) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou senha inválidos." });
         }
-        const token = await createTestAdminSession();
-        if (!token) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Login de teste indisponível." });
-        ctx.res.cookie(TEST_ADMIN_COOKIE, token, { ...getSessionCookieOptions(ctx.req), maxAge: 60 * 60 * 1000 });
+        const token = await createLocalAdminSession();
+        if (!token) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Login local indisponível." });
+        ctx.res.cookie(LOCAL_ADMIN_COOKIE, token, { ...getSessionCookieOptions(ctx.req), maxAge: 8 * 60 * 60 * 1000 });
         return { success: true } as const;
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      ctx.res.clearCookie(TEST_ADMIN_COOKIE, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(LOCAL_ADMIN_COOKIE, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
   }),

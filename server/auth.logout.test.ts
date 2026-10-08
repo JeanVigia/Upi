@@ -18,7 +18,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     openId: "sample-user",
     email: "sample@example.com",
     name: "Sample User",
-    loginMethod: "manus",
+    loginMethod: "local",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -58,6 +58,6 @@ describe("auth.logout", () => {
       httpOnly: true,
       path: "/",
     });
-    expect(clearedCookies[1]?.name).toBe("up-one-test-admin");
+    expect(clearedCookies[1]?.name).toBe("upi-local-admin");
   });
 });

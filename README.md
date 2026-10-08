@@ -2,7 +2,7 @@
 
 Chatbot web embutível para professores e coordenadores. O Upi responde com base nos guias cadastrados, aceita imagens coladas ou anexadas para análise de telas e pode ser incorporado em outro sistema por meio de `widget.js`.
 
-> **Importante:** este repositório foi criado originalmente no WebDev da Manus. O código ainda contém adaptadores Manus para autenticação, IA e storage. Este README descreve a instalação completa e também o trabalho obrigatório para operar de forma realmente independente.
+> **Estado da migração:** o repositório agora possui modo independente funcional: autenticação administrativa local, IA OpenAI-compatible, assets locais, storage local e Vite sem runtime Manus. Para produção, recomenda-se trocar o storage local por S3/R2/MinIO e o login local por um provedor institucional.
 
 ## Índice
 
@@ -137,9 +137,9 @@ ORDER BY id;
 
 Crie um arquivo `.env` na raiz do projeto. **Nunca versione esse arquivo e nunca coloque segredos em variáveis `VITE_*`.**
 
-### Instalação independente — nomes planejados
+### Instalação independente — variáveis usadas pelo código
 
-Estes são os nomes recomendados para os adaptadores independentes:
+Use estas variáveis no ambiente local:
 
 ```dotenv
 NODE_ENV=development
@@ -153,37 +153,17 @@ LLM_API_KEY=chave-do-provedor
 LLM_TEXT_MODEL=modelo-de-texto
 LLM_VISION_MODEL=modelo-com-visao
 
-# Storage S3/R2/MinIO
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_REGION=us-east-1
-S3_BUCKET=unipinhal-upi
-S3_ACCESS_KEY_ID=chave
-S3_SECRET_ACCESS_KEY=segredo
-S3_PUBLIC_BASE_URL=https://cdn.exemplo.edu.br
+# Autenticação administrativa local
+LOCAL_ADMIN_USERNAME=Admin
+LOCAL_ADMIN_PASSWORD=troque-esta-senha
 
-# Autenticação independente
-AUTH_ISSUER=https://auth.exemplo.edu.br
-AUTH_CLIENT_ID=upi-web
-AUTH_CLIENT_SECRET=segredo
-AUTH_CALLBACK_URL=https://chat.exemplo.edu.br/api/auth/callback
+# Storage local (uploads e assets dinâmicos)
+STORAGE_DIR=./storage
 
 PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Variáveis usadas pelo código atual na Manus
-
-Até que os adaptadores sejam substituídos, o código atual espera também:
-
-```dotenv
-DATABASE_URL=...
-JWT_SECRET=...
-VITE_APP_ID=...
-OAUTH_SERVER_URL=...
-BUILT_IN_FORGE_API_URL=...
-BUILT_IN_FORGE_API_KEY=...
-```
-
-Para manter o login temporário em staging, configure `TEST_ADMIN_PASSWORD` no ambiente do servidor. O valor não deve aparecer no código, frontend, Git ou logs. O login temporário deve ser removido antes do primeiro deploy público.
+Não configure `BUILT_IN_FORGE_API_*`, `OAUTH_SERVER_URL` ou `VITE_APP_ID`: eles não são mais necessários para o modo independente.
 
 ## Executar em desenvolvimento
 
@@ -237,15 +217,22 @@ O proxy deve encaminhar para `127.0.0.1:3000`, preservar `X-Forwarded-Proto` e p
 
 ## Independência da Manus
 
-A instalação compila atualmente, mas não é independente enquanto os itens abaixo não forem trocados:
+O código principal não depende mais do runtime, OAuth ou Forge da Manus. A primeira camada independente implementada inclui:
+
+- `server/_core/context.ts`: sessão JWT local para o administrador;
+- `server/_core/llm.ts`: endpoint OpenAI-compatible configurável;
+- `server/storage.ts`: armazenamento local configurável por `STORAGE_DIR`;
+- `client/public/assets/upi/`: asset local do robô;
+- `vite.config.ts`: configuração Vite sem plugin Manus;
+- `server/_core/index.ts`: sem rotas OAuth/storage da Manus.
+
+Para um ambiente institucional de produção, ainda é recomendado substituir:
 
 ### 1. Autenticação
 
-Substitua:
+#### Autenticação institucional
 
-- `server/_core/sdk.ts`;
-- `server/_core/oauth.ts`;
-- a chamada de autenticação em `server/_core/context.ts`.
+O login atual é local e administrativo, adequado para instalação pequena ou staging. Para múltiplos professores/coordenadores, substitua `localLogin` por Keycloak, Zitadel, Microsoft Entra ID ou outro provedor OIDC, mantendo `ctx.user` e `adminProcedure`.
 
 Opções adequadas:
 
@@ -255,9 +242,9 @@ Opções adequadas:
 
 Preserve os contratos de `ctx.user`, o papel `admin` e a proteção `adminProcedure`. Em qualquer OAuth, use HTTPS, callback registrado e proteção CSRF com `state` e nonce. Nunca aceite uma URL de redirecionamento arbitrária enviada pelo usuário.
 
-### 2. IA
+#### IA
 
-Substitua o cliente de `server/_core/llm.ts` por um adaptador direto para o provedor escolhido. O contrato precisa continuar aceitando:
+`server/_core/llm.ts` já usa `LLM_BASE_URL` e `LLM_API_KEY` com o contrato OpenAI-compatible. O adaptador precisa continuar aceitando:
 
 - mensagens de sistema, usuário e assistente;
 - conteúdo multimodal com `image_url`;
@@ -270,9 +257,9 @@ A chave da IA deve ser lida somente pelo backend. Nunca a exponha em `VITE_*` ou
 
 Provedores possíveis: OpenAI, Google Gemini direto, Azure OpenAI ou endpoint OpenAI-compatible hospedado pela instituição. Confirme se o modelo escolhido aceita imagens no formato enviado pelo chat.
 
-### 3. Storage
+#### Storage de produção
 
-Substitua `server/storage.ts` e `server/_core/storageProxy.ts` por AWS S3, Cloudflare R2, MinIO ou outro serviço S3-compatible.
+O modo local usa `STORAGE_DIR` e a rota `/storage`. Para produção com múltiplas instâncias, substitua `server/storage.ts` por AWS S3, Cloudflare R2, MinIO ou outro serviço S3-compatible.
 
 O fluxo recomendado é:
 
@@ -282,21 +269,15 @@ O fluxo recomendado é:
 4. o banco guarda somente a chave e metadados;
 5. o frontend recebe uma URL pública controlada ou assinada.
 
-As URLs atuais `/manus-storage/...` não funcionam fora da Manus. O asset do Upi precisa ser copiado para o novo bucket e as referências em `Home.tsx` e `widget.js` precisam ser atualizadas.
+Os assets do Upi já são servidos localmente em `/assets/upi/`; o Widget não depende mais de `/manus-storage/`.
 
-### 4. Runtime
+#### Runtime removido
 
-Depois das substituições, remova ou revise:
-
-- `vite-plugin-manus-runtime` em `vite.config.ts`;
-- `client/public/__manus__/debug-collector.js`;
-- `.manus/` e `template.json` se não forem usados pelo novo deploy;
-- módulos de Forge, mapas, notificações e geração de imagem que não sejam necessários;
-- todas as chamadas que usam `BUILT_IN_FORGE_API_URL` ou `BUILT_IN_FORGE_API_KEY`.
+O runtime Manus, seus coletores de debug e módulos externos não utilizados foram removidos. O deploy independente usa apenas as variáveis documentadas neste README.
 
 ## Autenticação administrativa atual
 
-Durante os testes, a frase exata digitada no chat principal revela o formulário de login temporário. O usuário `Admin` é validado com `TEST_ADMIN_PASSWORD` e recebe um cookie JWT de curta duração.
+Durante os testes, a frase exata digitada no chat principal revela o formulário de login. O usuário configurado em `LOCAL_ADMIN_USERNAME` é validado com `LOCAL_ADMIN_PASSWORD` e recebe um cookie JWT de curta duração.
 
 Esse mecanismo é apenas temporário porque:
 
@@ -308,10 +289,9 @@ Esse mecanismo é apenas temporário porque:
 Antes do deploy público:
 
 1. remova o gatilho secreto do frontend;
-2. remova a procedure `testAdminLogin`;
-3. remova `TEST_ADMIN_PASSWORD`;
-4. migre usuários para o provedor institucional;
-5. mantenha apenas autorização por papel no backend.
+2. troque o login compartilhado por OIDC institucional;
+3. configure MFA e auditoria;
+4. mantenha apenas autorização por papel no backend.
 
 ## Widget embutível
 

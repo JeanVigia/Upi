@@ -5,7 +5,7 @@
   const iframePath = currentScript?.dataset.path || "/widget";
   const position = "right";
   const title = currentScript?.dataset.title || "Abrir Upi";
-  const iconUrl = `${widgetOrigin}/manus-storage/up-one-bot-transparent_f1fc341d.png`;
+  const iconUrl = `${widgetOrigin}/assets/upi/up-one-bot-transparent.png`;
 
   if (document.querySelector("[data-up-one-widget]")) return;
 

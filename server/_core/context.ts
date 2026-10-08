@@ -1,40 +1,39 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
 import { ENV } from "./env";
 import { parse } from "cookie";
 import { SignJWT, jwtVerify } from "jose";
 
-export const TEST_ADMIN_COOKIE = "up-one-test-admin";
+export const LOCAL_ADMIN_COOKIE = "upi-local-admin";
 
-function testAdminKey() {
+function sessionKey() {
   return new TextEncoder().encode(ENV.cookieSecret);
 }
 
-export async function createTestAdminSession() {
-  if (!ENV.cookieSecret) return null;
-  return new SignJWT({ role: "admin", name: "Admin", email: "admin@test.local" })
+export async function createLocalAdminSession() {
+  if (!ENV.cookieSecret || !ENV.localAdminPassword) return null;
+  return new SignJWT({ role: "admin", name: ENV.localAdminUsername, email: "admin@local" })
     .setProtectedHeader({ alg: "HS256" })
-    .setSubject("test-admin")
+    .setSubject("local-admin")
     .setIssuedAt()
-    .setExpirationTime("1h")
-    .sign(testAdminKey());
+    .setExpirationTime("8h")
+    .sign(sessionKey());
 }
 
-async function authenticateTestAdmin(req: CreateExpressContextOptions["req"]): Promise<User | null> {
+async function authenticateLocalAdmin(req: CreateExpressContextOptions["req"]): Promise<User | null> {
   if (!ENV.cookieSecret) return null;
-  const token = parse(req.headers.cookie ?? "")[TEST_ADMIN_COOKIE];
+  const token = parse(req.headers.cookie ?? "")[LOCAL_ADMIN_COOKIE];
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, testAdminKey());
-    if (payload.sub !== "test-admin" || payload.role !== "admin") return null;
+    const { payload } = await jwtVerify(token, sessionKey(), { algorithms: ["HS256"] });
+    if (payload.sub !== "local-admin" || payload.role !== "admin") return null;
     const now = new Date();
     return {
       id: -1,
-      openId: "test-admin",
-      name: "Admin",
-      email: "admin@test.local",
-      loginMethod: "test",
+      openId: "local-admin",
+      name: ENV.localAdminUsername,
+      email: "admin@local",
+      loginMethod: "local",
       role: "admin",
       createdAt: now,
       updatedAt: now,
@@ -51,23 +50,6 @@ export type TrpcContext = {
   user: User | null;
 };
 
-export async function createContext(
-  opts: CreateExpressContextOptions
-): Promise<TrpcContext> {
-  let user: User | null = null;
-
-  try {
-    user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
-    // Authentication is optional for public procedures.
-    user = null;
-  }
-
-  if (!user) user = await authenticateTestAdmin(opts.req);
-
-  return {
-    req: opts.req,
-    res: opts.res,
-    user,
-  };
+export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
+  return { req: opts.req, res: opts.res, user: await authenticateLocalAdmin(opts.req) };
 }

@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { BookOpen, CheckCircle2, FilePlus2, LogOut, Pencil, ShieldAlert, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,7 +24,7 @@ const emptyForm: GuideForm = {
 };
 
 export default function AdminGuides() {
-  const { user, loading, logout } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "/admin/guias" });
+  const { user, loading, logout } = useAuth();
   const utils = trpc.useUtils();
   const guidesQuery = trpc.guides.adminList.useQuery(undefined, { enabled: user?.role === "admin" });
   const createGuide = trpc.guides.create.useMutation({
@@ -44,6 +43,9 @@ export default function AdminGuides() {
   });
   const [form, setForm] = useState<GuideForm>(emptyForm);
   const [notice, setNotice] = useState("");
+  const [username, setUsername] = useState("Admin");
+  const [password, setPassword] = useState("");
+  const localLogin = trpc.auth.localLogin.useMutation({ onSuccess: () => window.location.reload() });
 
   useEffect(() => {
     if (createGuide.error) setNotice(createGuide.error.message);
@@ -55,7 +57,7 @@ export default function AdminGuides() {
   }
 
   if (!user) {
-    return <div className="flex min-h-screen items-center justify-center bg-[#f3f7f8] p-6"><AccessCard onLogin={() => startLogin()} /></div>;
+    return <div className="flex min-h-screen items-center justify-center bg-[#f3f7f8] p-6"><AccessCard username={username} password={password} error={localLogin.error?.message} pending={localLogin.isPending} onUsernameChange={setUsername} onPasswordChange={setPassword} onLogin={() => localLogin.mutate({ username, password })} /></div>;
   }
 
   if (user.role !== "admin") {
@@ -113,6 +115,6 @@ export default function AdminGuides() {
   );
 }
 
-function AccessCard({ onLogin }: { onLogin: () => void }) {
-  return <div className="w-full max-w-md rounded-2xl border border-[#dce7eb] bg-white p-8 text-center shadow-[0_16px_50px_rgba(0,54,80,.10)]"><ShieldAlert className="mx-auto mb-4 size-10 text-[#122b50]" /><h1 className="text-xl font-semibold text-[#122b50]">Área administrativa</h1><p className="mt-2 text-sm leading-6 text-[#637984]">Entre com uma conta autorizada para gerenciar os guias do Upi.</p><Button className="mt-6 w-full bg-[#122b50] hover:bg-[#0d1f38]" onClick={onLogin}>Entrar com conta autorizada</Button></div>;
+function AccessCard({ username, password, error, pending, onUsernameChange, onPasswordChange, onLogin }: { username: string; password: string; error?: string; pending: boolean; onUsernameChange: (value: string) => void; onPasswordChange: (value: string) => void; onLogin: () => void }) {
+  return <form onSubmit={(event) => { event.preventDefault(); onLogin(); }} className="w-full max-w-md rounded-2xl border border-[#dce7eb] bg-white p-8 shadow-[0_16px_50px_rgba(0,54,80,.10)]"><ShieldAlert className="mx-auto mb-4 size-10 text-[#122b50]" /><h1 className="text-center text-xl font-semibold text-[#122b50]">Área administrativa</h1><p className="mt-2 text-center text-sm leading-6 text-[#637984]">Entre com a conta local configurada no servidor.</p><label className="mt-6 block text-sm font-medium text-[#43606d]">Usuário<Input required value={username} onChange={(event) => onUsernameChange(event.target.value)} /></label><label className="mt-3 block text-sm font-medium text-[#43606d]">Senha<Input required type="password" value={password} onChange={(event) => onPasswordChange(event.target.value)} /></label>{error && <p className="mt-3 text-xs text-[#a34d43]">{error}</p>}<Button type="submit" disabled={pending} className="mt-6 w-full bg-[#122b50] hover:bg-[#0d1f38]">{pending ? "Entrando…" : "Entrar"}</Button></form>;
 }

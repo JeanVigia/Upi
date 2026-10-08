@@ -15,7 +15,7 @@ describe("Upi widget", () => {
     const script = await readFile(resolve(process.cwd(), "client/public/widget.js"), "utf8");
     expect(script).toContain("right: 20px");
     expect(script).toContain("width: 52px; height: 52px");
-    expect(script).toContain("const iconUrl = `${widgetOrigin}/manus-storage/up-one-bot-transparent_f1fc341d.png`");
+    expect(script).toContain("const iconUrl = `${widgetOrigin}/assets/upi/up-one-bot-transparent.png`");
     expect(script).toContain("background: #122b50 url(\"${iconUrl}\")");
   });
 });

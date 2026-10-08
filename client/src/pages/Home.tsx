@@ -29,7 +29,7 @@ export default function Home() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const adminLoginMutation = trpc.auth.testAdminLogin.useMutation({
+  const adminLoginMutation = trpc.auth.localLogin.useMutation({
     onSuccess: () => { window.location.href = "/admin/guias"; },
   });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -152,5 +152,5 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 }
 
 function AssistantMark({ size }: { size: "sm" | "md" }) {
-  return <div className={size === "md" ? "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eaf2f5]" : "mt-1 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eaf2f5]"}><img src="/manus-storage/up-one-bot-transparent_f1fc341d.png" alt="" className="size-full object-contain" /></div>;
+  return <div className={size === "md" ? "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eaf2f5]" : "mt-1 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eaf2f5]"}><img src="/assets/upi/up-one-bot-transparent.png" alt="" className="size-full object-contain" /></div>;
 }

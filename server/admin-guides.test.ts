@@ -24,7 +24,7 @@ const professor: User = {
   openId: "professor-admin-test",
   email: "professor@example.com",
   name: "Professor",
-  loginMethod: "manus",
+  loginMethod: "local",
   role: "user",
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -32,17 +32,17 @@ const professor: User = {
 };
 
 const admin: User = { ...professor, id: 3, openId: "admin-test", role: "admin", email: "admin@example.com" };
-const testAdminPassword = process.env.TEST_ADMIN_PASSWORD;
+const testAdminPassword = process.env.LOCAL_ADMIN_PASSWORD ?? process.env.TEST_ADMIN_PASSWORD;
 
 describe("admin guide procedures", () => {
   it("accepts only the temporary test credentials and issues a short-lived cookie", async () => {
     const invalid = loginContext();
-    await expect(appRouter.createCaller(invalid.ctx).auth.testAdminLogin({ username: "Admin", password: "wrong" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(appRouter.createCaller(invalid.ctx).auth.localLogin({ username: "Admin", password: "wrong" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     expect(testAdminPassword).toBeTruthy();
     const valid = loginContext();
-    await expect(appRouter.createCaller(valid.ctx).auth.testAdminLogin({ username: "Admin", password: testAdminPassword! })).resolves.toEqual({ success: true });
-    expect(valid.cookies[0]?.name).toBe("up-one-test-admin");
+    await expect(appRouter.createCaller(valid.ctx).auth.localLogin({ username: "Admin", password: testAdminPassword! })).resolves.toEqual({ success: true });
+    expect(valid.cookies[0]?.name).toBe("upi-local-admin");
   });
 
   it("rejects guide creation for unauthenticated and regular users", async () => {

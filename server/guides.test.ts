@@ -17,7 +17,7 @@ const sampleUser: AuthenticatedUser = {
   openId: "guide-test-user",
   email: "professor@example.com",
   name: "Professor Teste",
-  loginMethod: "manus",
+  loginMethod: "local",
   role: "user",
   createdAt: new Date(),
   updatedAt: new Date(),
