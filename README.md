@@ -15,6 +15,7 @@ Chatbot web embutível para professores e coordenadores. O Upi responde com base
 - [Executar em desenvolvimento](#executar-em-desenvolvimento)
 - [Testar e gerar build](#testar-e-gerar-build)
 - [Executar em produção](#executar-em-produção)
+- [Apache + MySQL](#apache--mysql)
 - [Independência da Manus](#independência-da-manus)
 - [Autenticação](#autenticação)
 - [IA e análise de screenshots](#ia-e-análise-de-screenshots)
@@ -215,6 +216,26 @@ O processo deve ficar atrás de um proxy reverso com HTTPS. Exemplos de opções
 
 O proxy deve encaminhar para `127.0.0.1:3000`, preservar `X-Forwarded-Proto` e permitir o tamanho necessário para uploads de screenshots. Configure reinício automático com systemd, Docker, PM2 ou o supervisor da hospedagem escolhida.
 
+## Apache + MySQL
+
+O cenário recomendado para a hospedagem própria é **Apache na frente, Node.js local na porta 3000 e MySQL local ou privado**. O Apache funciona como proxy reverso; ele não substitui o processo Node.
+
+Os arquivos prontos estão em:
+
+- `deploy/apache/upi.conf.example`: VirtualHost, HTTPS, proxy, WebSocket e limite de upload;
+- `deploy/systemd/upi.service.example`: serviço para iniciar e reiniciar o backend;
+- `deploy/mysql/01-create-database.sql`: criação do banco e usuário com permissões mínimas;
+- `deploy/README-APACHE-MYSQL.md`: instalação completa passo a passo.
+
+Resumo do fluxo:
+
+```text
+Navegador → Apache :443 → Node/Express 127.0.0.1:3000 → MySQL
+                                      └──────────────→ /var/lib/upi/storage
+```
+
+O storage local deve ficar fora do repositório, por exemplo em `/var/lib/upi/storage`, com permissão exclusiva do usuário de serviço `upi`. Faça backup do banco e desse diretório separadamente.
+
 ## Independência da Manus
 
 O código principal não depende mais do runtime, OAuth ou Forge da Manus. A primeira camada independente implementada inclui:
@@ -368,13 +389,14 @@ Faça a cópia dos assets para o novo bucket separadamente. Um dump MySQL não c
 
 O comando Drizzle não encontrou `DATABASE_URL`. Confirme que o `.env` está na raiz e que o processo está sendo iniciado a partir da raiz do projeto.
 
-### `Storage config missing` ou `/manus-storage` retorna erro
+### `/storage` retorna erro
 
-O código ainda usa o storage da Manus. Configure as variáveis Forge temporariamente ou conclua a substituição por S3/R2/MinIO descrita acima.
+Confirme que `STORAGE_DIR` existe e pertence ao usuário que executa o Node. Em uma instalação systemd, use um caminho absoluto, como `/var/lib/upi/storage`, e execute:
 
-### `OAUTH_SERVER_URL is not configured`
-
-A autenticação Manus ainda está ativa. Configure as variáveis Manus para staging ou implemente o adaptador de autenticação independente.
+```bash
+sudo install -d -o upi -g upi -m 750 /var/lib/upi/storage
+sudo systemctl restart upi
+```
 
 ### A IA não responde
 

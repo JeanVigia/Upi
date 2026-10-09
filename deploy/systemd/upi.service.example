@@ -1,0 +1,24 @@
+[Unit]
+Description=Upi - Assistente acadêmico da UniPinhal
+After=network.target
+
+[Service]
+Type=simple
+User=upi
+Group=upi
+WorkingDirectory=/var/www/upi
+EnvironmentFile=/etc/upi/upi.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node /var/www/upi/dist/index.js
+Restart=always
+RestartSec=5
+
+# Proteções básicas; ajuste se a hospedagem exigir outra política.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/upi/storage
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,36 @@
+# Copie para /etc/apache2/sites-available/upi.conf e substitua o domínio.
+# O Node.js escuta somente em 127.0.0.1:3000; o Apache termina HTTPS.
+
+<VirtualHost *:80>
+    ServerName chat.seu-dominio.edu.br
+    Redirect permanent / https://chat.seu-dominio.edu.br/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName chat.seu-dominio.edu.br
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/chat.seu-dominio.edu.br/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/chat.seu-dominio.edu.br/privkey.pem
+
+    ProxyRequests Off
+    ProxyPreserveHost On
+    AllowEncodedSlashes NoDecode
+
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+
+    # Mantém WebSocket disponível para futuras funcionalidades.
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*) ws://127.0.0.1:3000/$1 [P,L]
+
+    ProxyPass        / http://127.0.0.1:3000/ connectiontimeout=5 timeout=120 retry=0
+    ProxyPassReverse / http://127.0.0.1:3000/
+
+    ProxyTimeout 120
+    LimitRequestBody 52428800
+
+    ErrorLog ${APACHE_LOG_DIR}/upi-error.log
+    CustomLog ${APACHE_LOG_DIR}/upi-access.log combined
+</VirtualHost>
