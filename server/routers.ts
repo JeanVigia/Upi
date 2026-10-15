@@ -160,41 +160,50 @@ export const appRouter = router({
           history[history.length - 1] = { ...last, content: lastContent };
         }
 
-        const response = await invokeLLM({
-          model: selectChatModel(input.imageDataUrl),
-          maxTokens: 2400,
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...history,
-          ],
-        });
-        const firstChoice = response.choices[0];
-        let answer = normalizeAnswer(firstChoice?.message.content ?? "");
-
-        if (responseNeedsContinuation(firstChoice?.finish_reason) && answer) {
-          const continuation = await invokeLLM({
+        try {
+          const response = await invokeLLM({
             model: selectChatModel(input.imageDataUrl),
-            maxTokens: 1200,
+            maxTokens: 2400,
             messages: [
               { role: "system", content: systemPrompt },
               ...history,
-              { role: "assistant", content: answer },
-              { role: "user", content: "Continue exatamente do ponto em que parou. Não repita o que já foi escrito, conclua todos os passos e finalize a resposta." },
             ],
           });
-          const continuationText = normalizeAnswer(continuation.choices[0]?.message.content ?? "");
-          if (continuationText) answer = `${answer}\n\n${continuationText}`;
+          const firstChoice = response.choices[0];
+          let answer = normalizeAnswer(firstChoice?.message.content ?? "");
+
+          if (responseNeedsContinuation(firstChoice?.finish_reason) && answer) {
+            const continuation = await invokeLLM({
+              model: selectChatModel(input.imageDataUrl),
+              maxTokens: 1200,
+              messages: [
+                { role: "system", content: systemPrompt },
+                ...history,
+                { role: "assistant", content: answer },
+                { role: "user", content: "Continue exatamente do ponto em que parou. Não repita o que já foi escrito, conclua todos os passos e finalize a resposta." },
+              ],
+            });
+            const continuationText = normalizeAnswer(continuation.choices[0]?.message.content ?? "");
+            if (continuationText) answer = `${answer}\n\n${continuationText}`;
+          }
+
+          if (!answer) throw new Error("A IA não retornou uma resposta.");
+
+          return {
+            answer,
+            imageAnalyzed: Boolean(input.imageDataUrl),
+            // The answer itself includes the guide source selected by the model.
+            // Do not claim every active guide was used for every response.
+            usedGuideTitles: [],
+          };
+        } catch (error) {
+          const details = error instanceof Error ? error.message : String(error);
+          console.error(`[Upi AI] Falha ao consultar o modelo ${selectChatModel(input.imageDataUrl)}: ${details}`);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: ENV.isProduction ? "Não foi possível consultar a IA agora." : details,
+          });
         }
-
-        if (!answer) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "A IA não retornou uma resposta." });
-
-        return {
-          answer,
-          imageAnalyzed: Boolean(input.imageDataUrl),
-          // The answer itself includes the guide source selected by the model.
-          // Do not claim every active guide was used for every response.
-          usedGuideTitles: [],
-        };
       }),
   }),
 });

@@ -77,12 +77,14 @@ export default function Home() {
             { role: "assistant", content: result.answer, source: result.usedGuideTitles.length > 0 ? result.usedGuideTitles : undefined },
           ]);
         },
-        onError: () => {
+        onError: (error) => {
           setMessages((current) => [
             ...current,
             {
               role: "assistant",
-              content: "Não consegui consultar a base de guias agora. Tente novamente em instantes ou procure a coordenação.",
+              content: import.meta.env.DEV
+                ? `Não consegui consultar a IA. Detalhe técnico: ${error.message}`
+                : "Não consegui consultar a base de guias agora. Tente novamente em instantes ou procure a coordenação.",
             },
           ]);
         },
