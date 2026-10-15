@@ -22,7 +22,7 @@ function isSecureRequest(req: Request) {
 }
 
 export function getSessionCookieOptions(
-  req: Request
+  req: Request,
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
   // const hostname = req.hostname;
   // const shouldSetDomain =
@@ -39,10 +39,15 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  const secure = isSecureRequest(req);
+
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    // SameSite=None is rejected by browsers unless Secure is also enabled.
+    // Local development uses HTTP, so Lax is required for the admin session.
+    // Production HTTPS keeps None for the iframe/widget integration.
+    sameSite: secure ? "none" : "lax",
+    secure,
   };
 }
