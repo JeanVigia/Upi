@@ -305,7 +305,9 @@ const fetchWithBackoff = async (
   for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, init);
-      if (response.ok || attempt === RETRY_MAX_RETRIES) {
+      // 4xx errors other than rate limiting are configuration/authentication
+      // failures and will not be fixed by retrying the same request.
+      if (response.ok || attempt === RETRY_MAX_RETRIES || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
         return response;
       }
 

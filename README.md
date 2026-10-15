@@ -149,14 +149,14 @@ DATABASE_URL=mysql://upi_app:senha@127.0.0.1:3306/unipinhal
 JWT_SECRET=gere-uma-chave-aleatoria-longa-e-exclusiva
 
 # IA: chave somente no backend
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=chave-do-provedor
-LLM_TEXT_MODEL=modelo-de-texto
-LLM_VISION_MODEL=modelo-com-visao
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+LLM_API_KEY=chave-do-Google-AI-Studio
+LLM_TEXT_MODEL=gemini-2.5-flash
+LLM_VISION_MODEL=gemini-2.5-flash
 
 # Autenticação administrativa local
 LOCAL_ADMIN_USERNAME=Admin
-LOCAL_ADMIN_PASSWORD=troque-esta-senha
+LOCAL_ADMIN_PASSWORD="troque-esta-senha"
 
 # Storage local (uploads e assets dinâmicos)
 STORAGE_DIR=./storage
