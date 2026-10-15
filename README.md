@@ -151,8 +151,8 @@ JWT_SECRET=gere-uma-chave-aleatoria-longa-e-exclusiva
 # IA: chave somente no backend
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 LLM_API_KEY=chave-do-Google-AI-Studio
-LLM_TEXT_MODEL=gemini-2.5-flash
-LLM_VISION_MODEL=gemini-2.5-flash
+LLM_TEXT_MODEL=gemini-3.8-flash
+LLM_VISION_MODEL=gemini-3.8-flash
 
 # Autenticação administrativa local
 LOCAL_ADMIN_USERNAME=Admin

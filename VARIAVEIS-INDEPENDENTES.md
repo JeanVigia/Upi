@@ -22,8 +22,8 @@ LOCAL_ADMIN_USERNAME=Admin
 LOCAL_ADMIN_PASSWORD=senha-forte
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 LLM_API_KEY=chave-do-google-ai-studio
-LLM_TEXT_MODEL=gemini-2.5-flash
-LLM_VISION_MODEL=gemini-2.5-flash
+LLM_TEXT_MODEL=gemini-3.8-flash
+LLM_VISION_MODEL=gemini-3.8-flash
 STORAGE_DIR=/var/lib/upi/storage
 PUBLIC_APP_URL=https://chat.seu-dominio.edu.br
 ```

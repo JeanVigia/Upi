@@ -6,8 +6,8 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   llmBaseUrl: (process.env.LLM_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta/openai").replace(/\/+$/, ""),
   llmApiKey: process.env.LLM_API_KEY ?? "",
-  llmTextModel: process.env.LLM_TEXT_MODEL ?? "gemini-2.5-flash",
-  llmVisionModel: process.env.LLM_VISION_MODEL ?? "gemini-2.5-flash",
+  llmTextModel: process.env.LLM_TEXT_MODEL ?? "gemini-3.8-flash",
+  llmVisionModel: process.env.LLM_VISION_MODEL ?? "gemini-3.8-flash",
   storageDir: process.env.STORAGE_DIR ?? "./storage",
   publicAppUrl: process.env.PUBLIC_APP_URL ?? "http://localhost:3000",
 };
