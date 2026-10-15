@@ -4,10 +4,10 @@ export const ENV = {
   localAdminUsername: process.env.LOCAL_ADMIN_USERNAME ?? "Admin",
   localAdminPassword: process.env.LOCAL_ADMIN_PASSWORD ?? process.env.TEST_ADMIN_PASSWORD ?? "",
   isProduction: process.env.NODE_ENV === "production",
-  llmBaseUrl: (process.env.LLM_BASE_URL ?? "https://api.openai.com/v1").replace(/\/+$/, ""),
+  llmBaseUrl: (process.env.LLM_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta/openai").replace(/\/+$/, ""),
   llmApiKey: process.env.LLM_API_KEY ?? "",
-  llmTextModel: process.env.LLM_TEXT_MODEL ?? "gpt-4o-mini",
-  llmVisionModel: process.env.LLM_VISION_MODEL ?? "gpt-4o",
+  llmTextModel: process.env.LLM_TEXT_MODEL ?? "gemini-2.5-flash",
+  llmVisionModel: process.env.LLM_VISION_MODEL ?? "gemini-2.5-flash",
   storageDir: process.env.STORAGE_DIR ?? "./storage",
   publicAppUrl: process.env.PUBLIC_APP_URL ?? "http://localhost:3000",
 };

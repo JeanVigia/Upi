@@ -1,56 +1,47 @@
 # Variáveis do ambiente independente
 
-Use este documento para criar o arquivo `.env` no servidor novo. **Não versionar o `.env` e não colocar chaves no frontend.**
+O modelo pronto está em [`deploy/upi.env.example`](deploy/upi.env.example).
+
+Em desenvolvimento, copie-o para `.env` na raiz do projeto. Em produção com Apache/systemd, copie-o para `/etc/upi/upi.env` e ajuste os valores:
+
+```bash
+cp deploy/upi.env.example .env
+```
+
+**Nunca versione o arquivo preenchido e nunca coloque chaves em variáveis `VITE_*`.**
+
+## Variáveis obrigatórias
 
 ```dotenv
 NODE_ENV=production
+HOST=127.0.0.1
 PORT=3000
-DATABASE_URL=mysql://usuario:senha@host:3306/unipinhal
-JWT_SECRET=chave-aleatoria-longa-e-exclusiva
-
-# IA — nomes sugeridos para o adaptador independente
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=segredo-do-backend
-LLM_TEXT_MODEL=modelo-de-texto
-LLM_VISION_MODEL=modelo-com-visao
-
-# S3/R2/MinIO — nomes sugeridos para o storage independente
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_REGION=us-east-1
-S3_BUCKET=unipinhal-upi
-S3_ACCESS_KEY_ID=segredo
-S3_SECRET_ACCESS_KEY=segredo
-S3_PUBLIC_BASE_URL=https://cdn.exemplo.edu.br
-
-# Identidade — preencher após escolher Keycloak, Entra, Google, Auth0 etc.
-AUTH_ISSUER=https://auth.exemplo.edu.br
-AUTH_CLIENT_ID=upi-web
-AUTH_CLIENT_SECRET=segredo
-AUTH_CALLBACK_URL=https://chat.exemplo.edu.br/api/auth/callback
-
-PUBLIC_APP_URL=https://chat.exemplo.edu.br
+DATABASE_URL=mysql://upi_app:SENHA@127.0.0.1:3306/unipinhal
+JWT_SECRET=chave-longa-gerada-com-openssl
+LOCAL_ADMIN_USERNAME=Admin
+LOCAL_ADMIN_PASSWORD=senha-forte
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+LLM_API_KEY=chave-do-google-ai-studio
+LLM_TEXT_MODEL=gemini-2.5-flash
+LLM_VISION_MODEL=gemini-2.5-flash
+STORAGE_DIR=/var/lib/upi/storage
+PUBLIC_APP_URL=https://chat.seu-dominio.edu.br
 ```
 
-## Regras
+Gere o segredo de sessão com:
 
-- `DATABASE_URL`, `JWT_SECRET`, `LLM_API_KEY` e chaves S3 ficam somente no servidor.
-- Variáveis prefixadas com `VITE_` são incorporadas ao JavaScript público; nunca use esse prefixo para segredos.
-- `JWT_SECRET` deve ser novo na migração. Não reutilize a chave da Manus.
-- O domínio usado em `AUTH_CALLBACK_URL` precisa estar cadastrado no provedor de identidade.
-- O bucket deve permitir acesso somente conforme a política escolhida; prefira URLs assinadas para prints de usuários.
-- Configure rotação de chaves, backup do banco e backup do bucket antes do corte de produção.
-
-## Compatibilidade temporária
-
-Enquanto os adaptadores ainda não forem implementados, o código atual continua esperando:
-
-```dotenv
-DATABASE_URL=...
-JWT_SECRET=...
-VITE_APP_ID=...
-OAUTH_SERVER_URL=...
-BUILT_IN_FORGE_API_URL=...
-BUILT_IN_FORGE_API_KEY=...
+```bash
+openssl rand -base64 48
 ```
 
-Essas variáveis mantêm o projeto ligado à Manus e devem ser removidas somente depois da substituição de `server/_core/sdk.ts`, `server/_core/oauth.ts`, `server/_core/llm.ts`, `server/storage.ts` e `server/_core/storageProxy.ts`.
+A chave da IA deve ser criada no [Google AI Studio](https://aistudio.google.com/) e permanecer somente no backend. O Upi usa o endpoint OpenAI-compatible do Gemini; a URL não deve incluir `/chat/completions`, pois o adaptador acrescenta esse caminho.
+
+## Regras de segurança
+
+- `DATABASE_URL`, `JWT_SECRET`, `LOCAL_ADMIN_PASSWORD` e `LLM_API_KEY` ficam somente no servidor.
+- `JWT_SECRET` deve ser novo na instalação independente; não reutilize uma chave da Manus.
+- Em produção, use `STORAGE_DIR` absoluto e persistente, como `/var/lib/upi/storage`.
+- O usuário MySQL deve ter permissões somente no banco do Upi.
+- Use HTTPS no domínio público.
+- Remova o login secreto e migre para OIDC institucional antes do lançamento para toda a instituição.
+- Não envie screenshots reais com dados pessoais durante os testes gratuitos sem revisar a política de privacidade do provedor.
