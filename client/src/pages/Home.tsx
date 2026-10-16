@@ -69,7 +69,9 @@ export default function Home() {
 
     chatMutation.mutate(
       {
-        messages: nextMessages.map(({ role, content }) => ({ role, content })),
+        // Keep the complete conversation visible locally, but respect the
+        // backend contract by sending only the most recent 12 messages.
+        messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })),
         imageDataUrl: attachedImage,
       },
       {
