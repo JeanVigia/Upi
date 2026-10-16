@@ -58,8 +58,8 @@ export function responseNeedsContinuation(finishReason: string | null | undefine
   return finishReason === "length";
 }
 
-export const GOOGLE_AI_RATE_LIMIT_MESSAGE =
-  "A API do Google AI Studio atingiu o limite de requisições no momento. Aguarde alguns instantes e faça sua pergunta novamente.";
+export const RATE_LIMIT_MESSAGE =
+  "O assistente está recebendo muitas solicitações no momento. Aguarde um instante e faça sua pergunta novamente.";
 
 export function isGoogleAiRateLimitError(details: string) {
   return /(?:\b429\b|resource_exhausted|rate[ -]?limit|too many requests|quota|exceeded)/i.test(details);
@@ -209,7 +209,7 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: isGoogleAiRateLimitError(details)
-              ? GOOGLE_AI_RATE_LIMIT_MESSAGE
+              ? RATE_LIMIT_MESSAGE
               : ENV.isProduction
                 ? "Não foi possível consultar a IA agora."
                 : details,
