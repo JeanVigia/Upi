@@ -52,6 +52,15 @@ export default function AdminGuides() {
     if (updateGuide.error) setNotice(updateGuide.error.message);
   }, [createGuide.error, updateGuide.error]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      // Leave the admin route after logout so the public chat is immediately accessible.
+      window.location.replace("/");
+    }
+  };
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center bg-[#f3f7f8] text-sm text-[#5f7480]">Verificando acesso administrativo…</div>;
   }
@@ -67,7 +76,7 @@ export default function AdminGuides() {
           <ShieldAlert className="mx-auto mb-4 size-10 text-[#9c5d4d]" />
           <h1 className="text-xl font-semibold text-[#122b50]">Acesso restrito</h1>
           <p className="mt-2 text-sm leading-6 text-[#637984]">Esta área é exclusiva para administradores responsáveis pela base de conhecimento.</p>
-          <Button className="mt-6 bg-[#122b50] hover:bg-[#0d1f38]" onClick={() => void logout()}>Sair</Button>
+          <Button className="mt-6 bg-[#122b50] hover:bg-[#0d1f38]" onClick={() => void handleLogout()}>Sair</Button>
         </div>
       </div>
     );
@@ -92,7 +101,7 @@ export default function AdminGuides() {
             <div className="flex size-11 items-center justify-center rounded-xl bg-[#e6f0f3] text-[#122b50]"><BookOpen className="size-5" /></div>
             <div><p className="text-lg font-semibold text-[#122b50]">Upi · Administração</p><p className="text-xs text-[#71838c]">Base de conhecimento</p></div>
           </div>
-          <div className="flex items-center gap-3 text-right"><div className="hidden sm:block"><p className="text-sm font-medium text-[#355563]">{user.name || "Administrador"}</p><p className="text-xs text-[#81929a]">Acesso administrativo</p></div><Button variant="outline" className="border-[#cbdbe2] text-[#496572]" onClick={() => void logout()}><LogOut className="mr-2 size-4" />Sair</Button></div>
+          <div className="flex items-center gap-3 text-right"><div className="hidden sm:block"><p className="text-sm font-medium text-[#355563]">{user.name || "Administrador"}</p><p className="text-xs text-[#81929a]">Acesso administrativo</p></div><Button variant="outline" className="border-[#cbdbe2] text-[#496572]" onClick={() => void handleLogout()}><LogOut className="mr-2 size-4" />Sair</Button></div>
         </div>
       </header>
 
