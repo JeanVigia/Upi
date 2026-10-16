@@ -63,3 +63,36 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href], sel
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+/* Design importado da referência Upi_AssistenteAcadêmico.html. */
+.upi-page {
+  background: radial-gradient(circle at 10% 8%, rgba(224, 58, 58, .10), transparent 42%), radial-gradient(circle at 92% 94%, #04475a22, transparent 45%), #f3f6fa;
+}
+.upi-app { width: 100%; border-radius: 20px; }
+.upi-app-header { position: relative; border-bottom: 0; }
+.upi-app-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #e03a3a, #04475a, #e03a3a); background-size: 200% 100%; animation: upi-flow 8s linear infinite; }
+.upi-messages { background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300'><path d='M0 260C150 120 380 60 600 120' fill='none' stroke='%23e03a3a' stroke-opacity='.09' stroke-width='28' stroke-linecap='round'/><path d='M0 300C180 180 400 140 600 190' fill='none' stroke='%2304475a' stroke-opacity='.08' stroke-width='28' stroke-linecap='round'/></svg>") no-repeat center bottom / 100% auto; }
+.upi-assistant-bubble { background: #eef4fa; border: 1px solid #dbe6f1; border-left: 3px solid #e03a3a; }
+.upi-user-bubble { background: linear-gradient(135deg, #04475a, #1a6aa8); }
+.upi-input-box { border-radius: 16px; }
+.upi-send:not(:disabled):hover { background: #d0343a; color: white; }
+@keyframes upi-flow { to { background-position: 200% 0; } }
+@media (prefers-reduced-motion: reduce) { .upi-app-header::after { animation: none; } }
+
+.upi-admin { background: #f1f5f9; }
+.upi-admin-header { position: relative; border-bottom: 0; }
+.upi-admin-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #e03a3a, #04475a, #e03a3a); background-size: 200% 100%; animation: upi-flow 8s linear infinite; }
+.upi-admin-card { border-radius: 18px; }
+.upi-admin-card h1, .upi-admin-card h2, .upi-admin-card h3 { color: #04475a; }
+.upi-admin-card input, .upi-admin-card textarea, .upi-admin-card select { border-color: #c9d6e4; border-radius: 10px; }
+.upi-admin-card input:focus, .upi-admin-card textarea:focus, .upi-admin-card select:focus { border-color: #c3d5e8; box-shadow: 0 0 0 3px #cfe0f0; }
+.upi-admin-access-card input:focus { border-color: #c3d5e8; box-shadow: 0 0 0 3px #cfe0f0; }
+.upi-admin-primary { background: linear-gradient(135deg, #e03a3a, #a42631) !important; }
+.upi-admin-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(208, 52, 58, .3); }
+
+.upi-login-overlay { background: rgba(40, 55, 80, .32); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.upi-login-modal { box-shadow: 0 20px 60px rgba(20, 35, 60, .30); }
+.upi-login-icon { background: #e8f0f8; color: #04475a; }
+.upi-login-field:focus { border-color: #c3d5e8; box-shadow: 0 0 0 3px #cfe0f0; }
+.upi-login-submit { background: linear-gradient(135deg, #e03a3a, #a42631); }
+.upi-login-submit:hover { background: linear-gradient(135deg, #d0343a, #8f202b); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(208, 52, 58, .30); }
