@@ -126,7 +126,7 @@ export default function Home() {
     <main className={`upi-page ${embedded ? "min-h-screen bg-transparent text-[#1c2c42]" : "min-h-screen bg-[#f3f6fa] p-3 text-[#1c2c42] sm:p-6"}`}>
       <section className={`upi-app ${embedded ? "mx-auto flex h-screen w-full flex-col overflow-hidden bg-white" : "mx-auto flex h-[calc(100vh-1.5rem)] max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#dde5ee] bg-white shadow-[0_10px_40px_rgba(0,0,0,.06)] sm:h-[calc(100vh-3rem)]"}`}>
         <div className="upi-app-header flex items-center border-b border-[#c3d5e8] px-5 py-4 sm:px-7">
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-3">
             <AssistantMark size="md" />
             <div>
               <div className="font-semibold text-[#122b50]">Upi</div>
