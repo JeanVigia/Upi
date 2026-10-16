@@ -3,6 +3,8 @@ import { FileImage, Loader2, LockKeyhole, Paperclip, Send, ShieldCheck, X } from
 import { ClipboardEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
+const GOOGLE_AI_RATE_LIMIT_MESSAGE = "A API do Google AI Studio atingiu o limite de requisições no momento. Aguarde alguns instantes e faça sua pergunta novamente.";
+
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -82,7 +84,9 @@ export default function Home() {
             ...current,
             {
               role: "assistant",
-              content: import.meta.env.DEV
+              content: error.message.includes("Google AI Studio atingiu o limite de requisições")
+                ? GOOGLE_AI_RATE_LIMIT_MESSAGE
+                : import.meta.env.DEV
                 ? `Não consegui consultar a IA. Detalhe técnico: ${error.message}`
                 : "Não consegui consultar a base de guias agora. Tente novamente em instantes ou procure a coordenação.",
             },

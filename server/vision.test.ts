@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { responseNeedsContinuation, selectChatModel } from "./routers";
+import { isGoogleAiRateLimitError, responseNeedsContinuation, selectChatModel } from "./routers";
 
 describe("selectChatModel", () => {
   it("uses the stronger multimodal model when a print is attached", () => {
@@ -16,6 +16,11 @@ describe("selectChatModel", () => {
     expect(responseNeedsContinuation("length")).toBe(true);
     expect(responseNeedsContinuation("stop")).toBe(false);
     expect(responseNeedsContinuation(null)).toBe(false);
+  });
+
+  it("detects Google AI Studio rate-limit responses without matching unrelated errors", () => {
+    expect(isGoogleAiRateLimitError("429 Too Many Requests: RESOURCE_EXHAUSTED")).toBe(true);
+    expect(isGoogleAiRateLimitError("503 Service Unavailable")).toBe(false);
   });
 
   it("instructs image analysis to ignore colors and prioritize shape and icon", async () => {
