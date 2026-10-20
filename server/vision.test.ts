@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { isGoogleAiRateLimitError, MODEL_FALLBACK_ORDER, responseNeedsContinuation, selectChatModel } from "./routers";
+import { getModelFallbackOrder, isGoogleAiRateLimitError, responseNeedsContinuation, selectChatModel } from "./routers";
 
 describe("selectChatModel", () => {
   it("uses the stronger multimodal model when a print is attached", () => {
@@ -23,15 +23,14 @@ describe("selectChatModel", () => {
     expect(isGoogleAiRateLimitError("503 Service Unavailable")).toBe(false);
   });
 
-  it("keeps the requested model fallback order", () => {
-    expect(MODEL_FALLBACK_ORDER).toEqual([
-      "gemini-3.8-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-3.6-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3-flash-preview",
-      "gemini-2.5-flash-lite",
-      "gemini-2.5-flash",
+  it("uses the primary model followed by models configured in the environment", () => {
+    const configuredFallbacks = (process.env.LLM_TEXT_FALLBACK_MODELS ?? "")
+      .split(",")
+      .map((model) => model.trim())
+      .filter(Boolean);
+    expect(getModelFallbackOrder()).toEqual([
+      process.env.LLM_TEXT_MODEL ?? "gemini-3.8-flash",
+      ...configuredFallbacks.filter((model) => model !== (process.env.LLM_TEXT_MODEL ?? "gemini-3.8-flash")),
     ]);
   });
 
