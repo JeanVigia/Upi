@@ -275,25 +275,6 @@ type FetchInit = NonNullable<Parameters<typeof fetch>[1]>;
 const sleep = (ms: number) =>
   new Promise<void>(resolve => setTimeout(resolve, ms));
 
-let lastLlmRequestAt = 0;
-let llmRequestQueue: Promise<void> = Promise.resolve();
-
-// Serialize every outbound LLM request and keep at least the configured
-// interval between request starts. The default is 15 seconds (four requests
-// per minute), and ENV clamps custom values to a safe minimum of 12 seconds.
-const waitForLlmRequestSlot = async () => {
-  const scheduled = llmRequestQueue.then(async () => {
-    const waitMs = Math.max(
-      0,
-      ENV.llmRequestDelayMs - (Date.now() - lastLlmRequestAt),
-    );
-    if (waitMs > 0) await sleep(waitMs);
-    lastLlmRequestAt = Date.now();
-  });
-  llmRequestQueue = scheduled.catch(() => undefined);
-  await scheduled;
-};
-
 const parseRetryAfter = (value: string | null): number | undefined => {
   if (!value) return undefined;
   const seconds = Number(value);
@@ -326,7 +307,6 @@ const fetchWithBackoff = async (
 
   for (let attempt = 0; attempt <= retryLimit; attempt++) {
     try {
-      await waitForLlmRequestSlot();
       const response = await fetch(url, init);
       // 4xx errors other than rate limiting are configuration/authentication
       // failures and will not be fixed by retrying the same request.

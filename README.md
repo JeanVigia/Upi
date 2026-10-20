@@ -155,7 +155,6 @@ LLM_TEXT_MODEL=gemini-3.8-flash
 LLM_VISION_MODEL=gemini-3.8-flash
 LLM_TEXT_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
 LLM_VISION_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
-LLM_REQUEST_DELAY_MS=15000
 
 # Autenticação administrativa local
 LOCAL_ADMIN_USERNAME=Admin
@@ -269,8 +268,6 @@ Preserve os contratos de `ctx.user`, o papel `admin` e a proteção `adminProced
 #### IA
 
 `server/_core/llm.ts` já usa `LLM_BASE_URL` e `LLM_API_KEY` com o contrato OpenAI-compatible. O adaptador precisa continuar aceitando:
-
-`LLM_REQUEST_DELAY_MS` define o intervalo entre o início das requisições à IA. O padrão é `15000` ms (quatro requisições por minuto), e valores abaixo de `12000` ms são elevados automaticamente para 12 segundos. O controle é global no processo e também se aplica às tentativas de fallback entre modelos.
 
 - mensagens de sistema, usuário e assistente;
 - conteúdo multimodal com `image_url`;
