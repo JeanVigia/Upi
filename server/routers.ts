@@ -1,6 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { MessageContent, invokeLLM } from "./_core/llm";
+import { InvokeParams, MessageContent, invokeLLM } from "./_core/llm";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { createLocalAdminSession, LOCAL_ADMIN_COOKIE } from "./_core/context";
 import { createGuide, getActiveGuides, getAllGuides, getDb, updateGuide } from "./db";
@@ -61,8 +61,41 @@ export function responseNeedsContinuation(finishReason: string | null | undefine
 export const RATE_LIMIT_MESSAGE =
   "O assistente está recebendo muitas solicitações no momento. Aguarde um instante e faça sua pergunta novamente.";
 
+export const MODEL_FALLBACK_ORDER = [
+  "gemini-3.8-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-flash",
+] as const;
+
 export function isGoogleAiRateLimitError(details: string) {
   return /(?:\b429\b|resource_exhausted|rate[ -]?limit|too many requests|quota|exceeded)/i.test(details);
+}
+
+function isFallbackEligibleError(details: string) {
+  return isGoogleAiRateLimitError(details) || /\b(?:408|500|502|503|504)\b|model.*(?:not found|unavailable)|not found/i.test(details);
+}
+
+export async function invokeWithModelFallback(params: Omit<InvokeParams, "model">, preferredModel: string) {
+  const modelOrder = [preferredModel, ...MODEL_FALLBACK_ORDER.filter((model) => model !== preferredModel)];
+  let lastError: unknown;
+
+  for (const model of modelOrder) {
+    try {
+      const response = await invokeLLM({ ...params, model, maxRetries: 0 });
+      return { response, model };
+    } catch (error) {
+      lastError = error;
+      const details = error instanceof Error ? error.message : String(error);
+      if (!isFallbackEligibleError(details)) throw error;
+      console.warn(`[Upi AI] Modelo ${model} indisponível; tentando o próximo fallback.`);
+    }
+  }
+
+  throw new Error(RATE_LIMIT_MESSAGE, { cause: lastError });
 }
 
 export const appRouter = router({
@@ -168,20 +201,19 @@ export const appRouter = router({
         }
 
         try {
-          const response = await invokeLLM({
-            model: selectChatModel(input.imageDataUrl),
+          const firstAttempt = await invokeWithModelFallback({
             maxTokens: 2400,
             messages: [
               { role: "system", content: systemPrompt },
               ...history,
             ],
-          });
+          }, selectChatModel(input.imageDataUrl));
+          const response = firstAttempt.response;
           const firstChoice = response.choices[0];
           let answer = normalizeAnswer(firstChoice?.message.content ?? "");
 
           if (responseNeedsContinuation(firstChoice?.finish_reason) && answer) {
-            const continuation = await invokeLLM({
-              model: selectChatModel(input.imageDataUrl),
+            const continuationAttempt = await invokeWithModelFallback({
               maxTokens: 1200,
               messages: [
                 { role: "system", content: systemPrompt },
@@ -189,7 +221,8 @@ export const appRouter = router({
                 { role: "assistant", content: answer },
                 { role: "user", content: "Continue exatamente do ponto em que parou. Não repita o que já foi escrito, conclua todos os passos e finalize a resposta." },
               ],
-            });
+            }, firstAttempt.model);
+            const continuation = continuationAttempt.response;
             const continuationText = normalizeAnswer(continuation.choices[0]?.message.content ?? "");
             if (continuationText) answer = `${answer}\n\n${continuationText}`;
           }
@@ -208,7 +241,7 @@ export const appRouter = router({
           console.error(`[Upi AI] Falha ao consultar o modelo ${selectChatModel(input.imageDataUrl)}: ${details}`);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: isGoogleAiRateLimitError(details)
+            message: details === RATE_LIMIT_MESSAGE || isGoogleAiRateLimitError(details)
               ? RATE_LIMIT_MESSAGE
               : ENV.isProduction
                 ? "Não foi possível consultar a IA agora."

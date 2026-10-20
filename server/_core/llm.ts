@@ -69,6 +69,7 @@ export type InvokeParams = {
   model?: string;
   thinking?: Record<string, unknown>;
   reasoning?: Record<string, unknown>;
+  maxRetries?: number;
 };
 
 export type ToolCall = {
@@ -298,16 +299,18 @@ const computeBackoffDelay = (
 // returns the final Response so callers keep their existing error handling.
 const fetchWithBackoff = async (
   url: string,
-  init: FetchInit
+  init: FetchInit,
+  maxRetries = RETRY_MAX_RETRIES
 ): Promise<Response> => {
   let lastError: unknown;
+  const retryLimit = Math.max(0, Math.min(maxRetries, RETRY_MAX_RETRIES));
 
-  for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= retryLimit; attempt++) {
     try {
       const response = await fetch(url, init);
       // 4xx errors other than rate limiting are configuration/authentication
       // failures and will not be fixed by retrying the same request.
-      if (response.ok || attempt === RETRY_MAX_RETRIES || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
+      if (response.ok || attempt === retryLimit || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
         return response;
       }
 
@@ -325,7 +328,7 @@ const fetchWithBackoff = async (
       await sleep(computeBackoffDelay(attempt, retryAfterMs));
     } catch (error) {
       lastError = error;
-      if (attempt === RETRY_MAX_RETRIES) throw error;
+      if (attempt === retryLimit) throw error;
       console.warn(
         `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after network error`
       );
@@ -355,6 +358,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     reasoning,
     maxTokens,
     max_tokens,
+    maxRetries,
   } = params;
 
   const payload: Record<string, unknown> = {
@@ -407,7 +411,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       authorization: `Bearer ${ENV.llmApiKey}`,
     },
     body: JSON.stringify(payload),
-  });
+  }, maxRetries);
 
   if (!response.ok) {
     const errorText = await response.text();
