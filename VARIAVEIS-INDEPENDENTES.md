@@ -24,6 +24,7 @@ LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 LLM_API_KEY=chave-do-google-ai-studio
 LLM_TEXT_MODEL=gemini-3.8-flash
 LLM_VISION_MODEL=gemini-3.8-flash
+LLM_REQUEST_DELAY_MS=15000
 STORAGE_DIR=/var/lib/upi/storage
 PUBLIC_APP_URL=https://chat.seu-dominio.edu.br
 ```
@@ -35,6 +36,8 @@ openssl rand -base64 48
 ```
 
 A chave da IA deve ser criada no [Google AI Studio](https://aistudio.google.com/) e permanecer somente no backend. O Upi usa o endpoint OpenAI-compatible do Gemini; a URL não deve incluir `/chat/completions`, pois o adaptador acrescenta esse caminho.
+
+`LLM_REQUEST_DELAY_MS` controla o intervalo entre o início de cada requisição à IA. O padrão é `15000` milissegundos, equivalente a quatro requisições por minuto; valores menores que `12000` são automaticamente elevados para o mínimo seguro de 12 segundos. O intervalo vale também para as tentativas de fallback.
 
 ## Regras de segurança
 

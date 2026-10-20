@@ -8,6 +8,7 @@ export const ENV = {
   llmApiKey: process.env.LLM_API_KEY ?? "",
   llmTextModel: process.env.LLM_TEXT_MODEL ?? "gemini-3.8-flash",
   llmVisionModel: process.env.LLM_VISION_MODEL ?? "gemini-3.8-flash",
+  llmRequestDelayMs: Math.max(12_000, Number(process.env.LLM_REQUEST_DELAY_MS ?? 15_000) || 15_000),
   storageDir: process.env.STORAGE_DIR ?? "./storage",
   publicAppUrl: process.env.PUBLIC_APP_URL ?? "http://localhost:3000",
 };
