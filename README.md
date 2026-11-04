@@ -220,7 +220,7 @@ O processo deve ficar atrás de um proxy reverso com HTTPS. Exemplos de opções
 - Traefik;
 - um serviço gerenciado que suporte Node.js.
 
-O proxy deve encaminhar para `127.0.0.1:3000`, preservar `X-Forwarded-Proto` e permitir o tamanho necessário para uploads de screenshots. Configure reinício automático com systemd, Docker, PM2 ou o supervisor da hospedagem escolhida.
+O proxy deve encaminhar para `127.0.0.1:3000`, preservar `X-Forwarded-Proto` e manter `LimitRequestBody` em 12 MiB, alinhado ao limite do parser Node para screenshots em Base64. Configure reinício automático com systemd, Docker, PM2 ou o supervisor da hospedagem escolhida.
 
 ## Apache + MySQL
 

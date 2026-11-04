@@ -29,7 +29,8 @@
     ProxyPassReverse / http://127.0.0.1:3000/
 
     ProxyTimeout 120
-    LimitRequestBody 52428800
+    # 12 MiB: margem para screenshot Base64 de até 8 MB e texto da conversa.
+    LimitRequestBody 12582912
 
     ErrorLog ${APACHE_LOG_DIR}/upi-error.log
     CustomLog ${APACHE_LOG_DIR}/upi-access.log combined
