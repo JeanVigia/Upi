@@ -8,6 +8,11 @@ import { guides } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { ENV } from "./_core/env";
+import {
+  ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
+  adminLoginRateLimiter,
+  getAdminLoginKey,
+} from "./adminLoginRateLimit";
 
 const DEFAULT_GUIDES = [
   {
@@ -99,11 +104,23 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     localLogin: publicProcedure
-      .input(z.object({ username: z.string(), password: z.string() }))
+      .input(z.object({ username: z.string().min(1).max(180), password: z.string().min(1).max(256) }))
       .mutation(async ({ ctx, input }) => {
+        const loginKey = getAdminLoginKey(ctx.req.ip || ctx.req.socket?.remoteAddress, input.username);
+        const rateLimit = adminLoginRateLimiter.check(loginKey);
+        if (!rateLimit.allowed) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
+          });
+        }
+
         if (!ENV.localAdminPassword || input.username !== ENV.localAdminUsername || input.password !== ENV.localAdminPassword) {
+          adminLoginRateLimiter.recordFailure(loginKey);
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou senha inválidos." });
         }
+
+        adminLoginRateLimiter.clear(loginKey);
         const token = await createLocalAdminSession();
         if (!token) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Login local indisponível." });
         ctx.res.cookie(LOCAL_ADMIN_COOKIE, token, { ...getSessionCookieOptions(ctx.req), maxAge: 8 * 60 * 60 * 1000 });
