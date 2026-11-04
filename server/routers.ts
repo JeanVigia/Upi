@@ -46,6 +46,31 @@ const messageSchema = z.object({
   content: z.string().min(1).max(12000),
 });
 
+export const MAX_IMAGE_DATA_URL_LENGTH = 10_000_000;
+export const MAX_IMAGE_BYTES = 6_000_000;
+const IMAGE_DATA_URL_PATTERN = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]*={0,2})$/;
+
+export function validateImageDataUrl(value: string): string | null {
+  if (value.length > MAX_IMAGE_DATA_URL_LENGTH) return "O print excede o tamanho máximo permitido.";
+  const match = IMAGE_DATA_URL_PATTERN.exec(value);
+  if (!match) return "O print deve ser uma imagem PNG, JPEG ou WebP válida.";
+
+  const [, mimeType, encoded] = match;
+  if (encoded.length % 4 !== 0) return "O conteúdo Base64 do print é inválido.";
+  const bytes = Buffer.from(encoded, "base64");
+  if (bytes.length > MAX_IMAGE_BYTES) return "O print excede o tamanho máximo permitido de 6 MB.";
+
+  const isPng = mimeType === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  const isJpeg = mimeType === "image/jpeg" && bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+  const isWebp = mimeType === "image/webp" && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP";
+  return isPng || isJpeg || isWebp ? null : "O conteúdo do print não corresponde ao MIME informado.";
+}
+
+const imageDataUrlSchema = z.string().superRefine((value, ctx) => {
+  const error = validateImageDataUrl(value);
+  if (error) ctx.addIssue({ code: "custom", message: error });
+});
+
 function normalizeAnswer(content: string | Array<{ type: string; text?: string }>) {
   if (typeof content === "string") return content.trim();
   return content
@@ -189,7 +214,7 @@ export const appRouter = router({
       .input(
         z.object({
           messages: z.array(messageSchema).min(1).max(12),
-          imageDataUrl: z.string().max(8_000_000).optional(),
+          imageDataUrl: imageDataUrlSchema.optional(),
         }),
       )
       .mutation(async ({ input }) => {

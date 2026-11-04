@@ -32,8 +32,8 @@ async function startServer() {
   const app = express();
   app.set("trust proxy", 1);
   const server = createServer(app);
-  // The chat accepts screenshots as Base64 inside JSON. Keep a small margin
-  // above the 8 MB image validation limit without allowing oversized bodies.
+  // The chat accepts screenshots as Base64 inside JSON. Keep a margin above
+  // the 6 MB decoded-image limit without allowing oversized bodies.
   app.use(express.json({ limit: "12mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
   app.use("/storage", express.static(ENV.storageDir, { fallthrough: false }));

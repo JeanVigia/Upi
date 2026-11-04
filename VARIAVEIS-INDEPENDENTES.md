@@ -57,3 +57,5 @@ A chave da IA deve ser criada no [Google AI Studio](https://aistudio.google.com/
 O login administrativo aplica bloqueio progressivo no backend por IP e usuário. O primeiro erro não bloqueia; falhas consecutivas aumentam a espera até 15 minutos. Um login válido limpa o histórico.
 
 O endpoint público do chat aplica rate limit no backend: por padrão, 10 chamadas por IP a cada 60 segundos, uma chamada simultânea por IP e quatro chamadas simultâneas no processo. Chamadas bloqueadas recebem HTTP 429 e não consomem a API da IA.
+
+Screenshots são validados no backend como `data URL` Base64 de PNG, JPEG ou WebP, com assinatura binária compatível e limite de 6 MB após decodificação.

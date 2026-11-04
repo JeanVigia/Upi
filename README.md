@@ -442,6 +442,6 @@ Verifique HTTPS, cookies `Secure`/`SameSite`, domínio do callback OAuth e o pro
 - `drizzle/*.sql`: migrações existentes.
 - `client/public/widget.js`: script de integração do Widget.
 
-O endpoint público do chat possui proteção no backend: por padrão, cada IP pode fazer até 10 chamadas por janela de 60 segundos, somente uma chamada simultânea por IP é aceita e o processo limita quatro chamadas simultâneas no total. Ao atingir o limite, o servidor responde HTTP 429 sem chamar a API da IA.
+O endpoint público do chat possui proteção no backend: por padrão, cada IP pode fazer até 10 chamadas por janela de 60 segundos, somente uma chamada simultânea por IP é aceita e o processo limita quatro chamadas simultâneas no total. Ao atingir o limite, o servidor responde HTTP 429 sem chamar a API da IA. Screenshots são aceitos somente como `data URL` Base64 de PNG, JPEG ou WebP, com assinatura compatível e no máximo 6 MB após decodificação.
 
 O login local possui rate limit progressivo no backend por combinação de IP e usuário: o primeiro erro não bloqueia, e erros consecutivos aplicam esperas crescentes de 5 segundos até 15 minutos. Um login bem-sucedido limpa o histórico daquela combinação.
