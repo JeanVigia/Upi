@@ -155,6 +155,10 @@ LLM_TEXT_MODEL=gemini-3.8-flash
 LLM_VISION_MODEL=gemini-3.8-flash
 LLM_TEXT_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
 LLM_VISION_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
+CHAT_RATE_LIMIT_WINDOW_MS=60000
+CHAT_RATE_LIMIT_MAX_REQUESTS=10
+CHAT_MAX_CONCURRENT_PER_IP=1
+CHAT_MAX_CONCURRENT_GLOBAL=4
 
 # Autenticação administrativa local
 LOCAL_ADMIN_USERNAME=Admin
@@ -437,3 +441,5 @@ Verifique HTTPS, cookies `Secure`/`SameSite`, domínio do callback OAuth e o pro
 - `drizzle/schema.ts`: schema atual do banco.
 - `drizzle/*.sql`: migrações existentes.
 - `client/public/widget.js`: script de integração do Widget.
+
+O endpoint público do chat possui proteção no backend: por padrão, cada IP pode fazer até 10 chamadas por janela de 60 segundos, somente uma chamada simultânea por IP é aceita e o processo limita quatro chamadas simultâneas no total. Ao atingir o limite, o servidor responde HTTP 429 sem chamar a API da IA.

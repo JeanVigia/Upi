@@ -26,6 +26,10 @@ LLM_TEXT_MODEL=gemini-3.8-flash
 LLM_VISION_MODEL=gemini-3.8-flash
 LLM_TEXT_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
 LLM_VISION_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemini-2.5-flash-lite,gemini-2.5-flash
+CHAT_RATE_LIMIT_WINDOW_MS=60000
+CHAT_RATE_LIMIT_MAX_REQUESTS=10
+CHAT_MAX_CONCURRENT_PER_IP=1
+CHAT_MAX_CONCURRENT_GLOBAL=4
 STORAGE_DIR=/var/lib/upi/storage
 PUBLIC_APP_URL=https://chat.seu-dominio.edu.br
 ```
@@ -49,3 +53,5 @@ A chave da IA deve ser criada no [Google AI Studio](https://aistudio.google.com/
 - Use HTTPS no domínio público.
 - Remova o login secreto e migre para OIDC institucional antes do lançamento para toda a instituição.
 - Não envie screenshots reais com dados pessoais durante os testes gratuitos sem revisar a política de privacidade do provedor.
+
+O endpoint público do chat aplica rate limit no backend: por padrão, 10 chamadas por IP a cada 60 segundos, uma chamada simultânea por IP e quatro chamadas simultâneas no processo. Chamadas bloqueadas recebem HTTP 429 e não consomem a API da IA.

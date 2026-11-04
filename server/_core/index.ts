@@ -7,6 +7,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
+import { createChatRateLimit } from "../chatRateLimit";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -29,11 +30,21 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+  app.set("trust proxy", 1);
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use("/storage", express.static(ENV.storageDir, { fallthrough: false }));
+  app.use(
+    "/api/trpc/ai.chat",
+    createChatRateLimit({
+      windowMs: ENV.chatRateLimitWindowMs,
+      maxRequests: ENV.chatRateLimitMaxRequests,
+      maxConcurrentPerIp: ENV.chatMaxConcurrentPerIp,
+      maxConcurrentGlobal: ENV.chatMaxConcurrentGlobal,
+    }),
+  );
   // tRPC API
   app.use(
     "/api/trpc",
