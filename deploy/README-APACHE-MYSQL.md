@@ -213,7 +213,7 @@ No navegador, valide:
 2. envio de pergunta textual;
 3. envio de screenshot;
 4. colagem via Ctrl+V;
-5. frase secreta e login administrativo;
+5. rota `/admin/guias` e login administrativo;
 6. criação e edição de guia;
 7. `/widget` e carregamento do `widget.js` em outro domínio.
 

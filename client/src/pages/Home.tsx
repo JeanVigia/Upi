@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { FileImage, Loader2, LockKeyhole, Paperclip, Send, ShieldCheck, X } from "lucide-react";
+import { FileImage, Loader2, Paperclip, Send, ShieldCheck, X } from "lucide-react";
 import { ClipboardEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
@@ -28,12 +28,6 @@ export default function Home() {
   const [draft, setDraft] = useState("");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageName, setImageName] = useState<string | null>(null);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [adminUsername, setAdminUsername] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-  const adminLoginMutation = trpc.auth.localLogin.useMutation({
-    onSuccess: () => { window.location.href = "/admin/guias"; },
-  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,13 +35,6 @@ export default function Home() {
     const scroll = scrollRef.current;
     if (scroll) scroll.scrollTop = scroll.scrollHeight;
   }, [messages, chatMutation.isPending]);
-
-  useEffect(() => {
-    if (!embedded && draft === "O André foi buscar mais café") {
-      setDraft("");
-      setShowAdminLogin(true);
-    }
-  }, [draft, embedded]);
 
   const sendMessage = (content = draft) => {
     const trimmed = content.trim();
@@ -147,7 +134,6 @@ export default function Home() {
           <div className="mx-auto mt-2 flex max-w-4xl items-center justify-between px-1 text-[10px] text-[#8492a1]"><span>Enter para enviar · Shift + Enter para quebrar linha</span><span className="flex items-center gap-1"><ShieldCheck className="size-3" /> Uso interno</span></div>
         </div>
       </section>
-      {!embedded && showAdminLogin && <div className="upi-login-overlay fixed inset-0 z-50 flex items-center justify-center p-4"><div role="dialog" aria-modal="true" aria-labelledby="admin-login-title" className="upi-login-modal w-full max-w-sm rounded-[18px] border border-[#d7e2e8] bg-white p-6"><div className="mb-5 flex items-start justify-between"><div><div className="upi-login-icon mb-3 flex size-10 items-center justify-center rounded-xl"><LockKeyhole className="size-5" /></div><h2 id="admin-login-title" className="text-lg font-semibold text-[#122b50]">Acesso administrativo</h2><p className="mt-1 text-xs text-[#718593]">Login de teste para gerenciar os guias.</p></div><button type="button" aria-label="Fechar login administrativo" onClick={() => setShowAdminLogin(false)} className="rounded-lg p-1 text-[#718593] hover:bg-[#eef4f6]"><X className="size-4" /></button></div><form onSubmit={(event) => { event.preventDefault(); adminLoginMutation.mutate({ username: adminUsername, password: adminPassword }); }} className="space-y-3"><label className="block text-sm font-medium text-[#43606d]">Usuário<input autoFocus required value={adminUsername} onChange={(event) => setAdminUsername(event.target.value)} className="upi-login-field mt-1 h-10 w-full rounded-md border border-[#cbdbe2] px-3 text-sm outline-none" placeholder="Admin" /></label><label className="block text-sm font-medium text-[#43606d]">Senha<input required type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} className="upi-login-field mt-1 h-10 w-full rounded-md border border-[#cbdbe2] px-3 text-sm outline-none" placeholder="Senha cadastrada no servidor" /></label>{adminLoginMutation.error && <p className="text-xs text-[#a34d43]">{adminLoginMutation.error.message}</p>}<button type="submit" disabled={adminLoginMutation.isPending} className="upi-login-submit w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60">{adminLoginMutation.isPending ? "Entrando…" : "Entrar"}</button></form></div></div>}
     </main>
   );
 }

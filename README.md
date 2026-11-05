@@ -201,7 +201,7 @@ Os testes atuais cobrem:
 - análise de visão;
 - colagem de imagens;
 - Widget;
-- login temporário de administrador.
+  - login administrativo e proteção CSRF.
 
 O build gera os arquivos do frontend e o servidor empacotado em `dist/`. O aviso de chunks grandes do Vite não impede o build; avalie code splitting caso o desempenho do frontend se torne um problema.
 
@@ -304,21 +304,9 @@ O runtime Manus, seus coletores de debug e módulos externos não utilizados for
 
 ## Autenticação administrativa atual
 
-Durante os testes, a frase exata digitada no chat principal revela o formulário de login. O usuário configurado em `LOCAL_ADMIN_USERNAME` é validado com `LOCAL_ADMIN_PASSWORD` e recebe um cookie JWT de curta duração.
+A área administrativa está disponível diretamente em `/admin/guias`. O frontend apresenta o formulário de login nessa rota, e o backend valida `LOCAL_ADMIN_USERNAME` e `LOCAL_ADMIN_PASSWORD` antes de emitir um cookie JWT de curta duração.
 
-Esse mecanismo é apenas temporário porque:
-
-- a frase secreta pode ser descoberta;
-- há uma única identidade compartilhada;
-- não há recuperação, MFA ou auditoria adequada;
-- não deve ser usado para proteger dados reais em produção.
-
-Antes do deploy público:
-
-1. remova o gatilho secreto do frontend;
-2. troque o login compartilhado por OIDC institucional;
-3. configure MFA e auditoria;
-4. mantenha apenas autorização por papel no backend.
+O chat público e o Widget não revelam nem acionam o login administrativo. Para produção, troque credenciais compartilhadas por um provedor OIDC institucional, configure MFA e mantenha a autorização por papel no backend.
 
 ## Widget embutível
 
@@ -343,7 +331,7 @@ Valide no sistema acadêmico:
 - bloqueios de cookies e políticas de iframe;
 - ausência de conflito com z-index e estilos globais.
 
-O Widget não deve carregar a área administrativa nem revelar o gatilho secreto.
+O Widget não carrega a área administrativa. O acesso administrativo está disponível somente pela rota `/admin/guias`, protegida por autenticação e autorização no backend.
 
 ## Migração do banco e dos guias
 
@@ -385,7 +373,7 @@ Faça a cópia dos assets para o novo bucket separadamente. Um dump MySQL não c
 - Prefira URLs assinadas para screenshots potencialmente sensíveis.
 - Configure backup do banco e do bucket, com teste periódico de restauração.
 - Habilite rate limiting no login, no chat e nos uploads.
-- Remova o login `Admin` temporário e o gatilho secreto antes do lançamento.
+- Troque credenciais de teste por credenciais fortes e mantenha a rota administrativa protegida.
 - Revogue as chaves da Manus somente depois de validar o ambiente independente.
 - Não use dados reais em staging sem autorização e controles equivalentes aos de produção.
 
@@ -431,7 +419,7 @@ Verifique HTTPS, cookies `Secure`/`SameSite`, domínio do callback OAuth e o pro
 - [ ] Colagem `Ctrl + V` testada.
 - [ ] Administração e permissões testadas.
 - [ ] Widget testado em um domínio externo.
-- [ ] Login temporário e frase secreta removidos.
+- [ ] Gatilho secreto removido e rota administrativa testada com autenticação normal.
 - [ ] Chaves da Manus revogadas somente após o corte confirmado.
 
 ## Documentos relacionados

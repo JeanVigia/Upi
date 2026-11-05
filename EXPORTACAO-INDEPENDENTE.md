@@ -48,7 +48,7 @@ Opções recomendadas:
 - **Auth0, Clerk ou WorkOS:** menor esforço operacional, porém serviço externo pago;
 - **Microsoft Entra ID / Google Workspace:** adequado se a UniPinhal já possui diretório institucional.
 
-O login temporário `Admin / 123` não deve ser levado para produção. Ele deve ser removido antes da publicação independente.
+O gatilho secreto de abertura do login foi removido. A área administrativa continua disponível em `/admin/guias`, com validação de `LOCAL_ADMIN_USERNAME` e `LOCAL_ADMIN_PASSWORD`; troque essas credenciais de teste por uma autenticação institucional antes da publicação independente.
 
 ### 3. Armazenamento de arquivos
 
