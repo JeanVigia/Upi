@@ -63,11 +63,11 @@ Execute o arquivo de exemplo somente depois de trocar a senha:
 sudo mysql < deploy/mysql/01-create-database.sql
 ```
 
-Aplique o schema e as migrações:
+Aplique o schema e as migrações. O exemplo abaixo usa a porta 3307, conforme a configuração deste projeto:
 
 ```bash
 cd /var/www/upi
-sudo -u upi env DATABASE_URL='mysql://upi_app:SENHA@127.0.0.1:3306/unipinhal' pnpm db:push
+sudo -u upi env DATABASE_URL='mysql://upi_app:SENHA@127.0.0.1:3307/unipinhal' pnpm db:push
 ```
 
 Se o MySQL estiver em outro servidor, troque `127.0.0.1` pelo hostname privado e permita somente o IP do servidor Upi no firewall do banco.
@@ -80,7 +80,7 @@ Crie o arquivo protegido `/etc/upi/upi.env`:
 NODE_ENV=production
 PORT=3000
 
-DATABASE_URL=mysql://upi_app:SENHA_DO_BANCO@127.0.0.1:3306/unipinhal
+DATABASE_URL=mysql://upi_app:SENHA_DO_BANCO@127.0.0.1:3307/unipinhal
 JWT_SECRET=GERE_UMA_CHAVE_LONGA_E_ALEATORIA
 
 LOCAL_ADMIN_USERNAME=Admin
@@ -108,7 +108,7 @@ sudo chown root:upi /etc/upi/upi.env
 sudo chmod 640 /etc/upi/upi.env
 ```
 
-Nunca coloque esse arquivo no GitHub, em `client/` ou em variáveis `VITE_*`.
+Nunca coloque esse arquivo no GitHub, em `client/` ou em variáveis `VITE_*`. Se o servidor usar a porta padrão, substitua `3307` por `3306` nos dois lugares. A porta deve ser a mesma usada pelo serviço MySQL.
 
 ## 5. Compilar e testar
 
@@ -118,6 +118,14 @@ sudo -u upi pnpm check
 sudo -u upi pnpm test
 sudo -u upi pnpm build
 ```
+
+Antes de publicar, execute também:
+
+```bash
+sudo -u upi pnpm audit --prod
+```
+
+O processo de produção não deve usar `vite`, `vitest` ou `drizzle-kit` em tempo de execução. Trate qualquer alerta `high` ou `critical` como bloqueador do release, mesmo quando o alerta vier de uma ferramenta usada apenas no desenvolvimento.
 
 O build deve gerar:
 
@@ -208,6 +216,10 @@ No navegador, valide:
 5. frase secreta e login administrativo;
 6. criação e edição de guia;
 7. `/widget` e carregamento do `widget.js` em outro domínio.
+
+As mutações administrativas de criação e edição de guias exigem sessão administrativa válida e token CSRF. O cliente envia automaticamente o cabeçalho a partir do cookie `upi-admin-csrf`; não desative esse cookie e não exponha `JWT_SECRET` ou `LOCAL_ADMIN_PASSWORD` no frontend. Em produção, faça o login somente por HTTPS.
+
+O chat público possui limite por IP, limite de concorrência por sessão/IP e limite global para chamadas à IA. O login administrativo usa backoff progressivo. Esses mecanismos reduzem abuso e consumo acidental da API, mas não substituem HTTPS, firewall, logs e rotação periódica das chaves.
 
 ## 10. Atualizar uma versão
 

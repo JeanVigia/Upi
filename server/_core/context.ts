@@ -3,8 +3,11 @@ import type { User } from "../../drizzle/schema";
 import { ENV } from "./env";
 import { parse } from "cookie";
 import { SignJWT, jwtVerify } from "jose";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 
 export const LOCAL_ADMIN_COOKIE = "upi-local-admin";
+export const ADMIN_CSRF_COOKIE = "upi-admin-csrf";
+export const CSRF_HEADER = "x-csrf-token";
 
 function sessionKey() {
   return new TextEncoder().encode(ENV.cookieSecret);
@@ -18,6 +21,18 @@ export async function createLocalAdminSession() {
     .setIssuedAt()
     .setExpirationTime("8h")
     .sign(sessionKey());
+}
+
+export function createCsrfToken() {
+  return randomBytes(32).toString("hex");
+}
+
+export function hasValidCsrfToken(req: CreateExpressContextOptions["req"]) {
+  const cookieToken = parse(req.headers.cookie ?? "")[ADMIN_CSRF_COOKIE];
+  const headerValue = req.headers[CSRF_HEADER];
+  const headerToken = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+  if (!cookieToken || !headerToken || !/^[a-f0-9]{64}$/.test(cookieToken) || !/^[a-f0-9]{64}$/.test(headerToken) || cookieToken.length !== headerToken.length) return false;
+  return timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
 }
 
 async function authenticateLocalAdmin(req: CreateExpressContextOptions["req"]): Promise<User | null> {

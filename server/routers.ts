@@ -1,8 +1,8 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { InvokeParams, MessageContent, invokeLLM } from "./_core/llm";
-import { adminProcedure, publicProcedure, router } from "./_core/trpc";
-import { createLocalAdminSession, LOCAL_ADMIN_COOKIE } from "./_core/context";
+import { adminMutationProcedure, adminProcedure, publicProcedure, router } from "./_core/trpc";
+import { ADMIN_CSRF_COOKIE, createCsrfToken, createLocalAdminSession, LOCAL_ADMIN_COOKIE } from "./_core/context";
 import { createGuide, getActiveGuides, getAllGuides, getDb, updateGuide } from "./db";
 import { guides } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
@@ -148,13 +148,16 @@ export const appRouter = router({
         adminLoginRateLimiter.clear(loginKey);
         const token = await createLocalAdminSession();
         if (!token) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Login local indisponível." });
-        ctx.res.cookie(LOCAL_ADMIN_COOKIE, token, { ...getSessionCookieOptions(ctx.req), maxAge: 8 * 60 * 60 * 1000 });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(LOCAL_ADMIN_COOKIE, token, { ...cookieOptions, maxAge: 8 * 60 * 60 * 1000 });
+        ctx.res.cookie(ADMIN_CSRF_COOKIE, createCsrfToken(), { ...cookieOptions, httpOnly: false, maxAge: 8 * 60 * 60 * 1000 });
         return { success: true } as const;
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       ctx.res.clearCookie(LOCAL_ADMIN_COOKIE, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(ADMIN_CSRF_COOKIE, { ...cookieOptions, httpOnly: false, maxAge: -1 });
       return { success: true } as const;
     }),
   }),
@@ -165,7 +168,7 @@ export const appRouter = router({
       return savedGuides.length > 0 ? savedGuides : DEFAULT_GUIDES;
     }),
     adminList: adminProcedure.query(async () => getAllGuides()),
-    create: adminProcedure
+    create: adminMutationProcedure
       .input(
         z.object({
           title: z.string().trim().min(4).max(180),
@@ -183,7 +186,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível salvar este guia." });
         }
       }),
-    update: adminProcedure
+    update: adminMutationProcedure
       .input(
         z.object({
           id: z.number().int().positive(),

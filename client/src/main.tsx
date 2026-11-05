@@ -9,6 +9,12 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+const readCookie = (name: string) => {
+  if (typeof document === "undefined") return "";
+  const entry = document.cookie.split("; ").find(value => value.startsWith(`${name}=`));
+  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : "";
+};
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -41,7 +47,8 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       headers() {
-        return {};
+        const csrfToken = readCookie("upi-admin-csrf");
+        return csrfToken ? { "x-csrf-token": csrfToken } : {};
       },
       fetch(input, init) {
         return globalThis.fetch(input, {
